@@ -1,42 +1,21 @@
-/*
- * ============================================================
- *  GUÍA PRÁCTICA 1 - Analizador Léxico en C
- *  UNJBG - Ingeniería en Informática y Sistemas
- * ============================================================
- *  Funcionalidades implementadas:
- *   [Base]  Palabras clave, identificadores, números enteros
- *   [Base]  Operadores y delimitadores
- *   [Act.1] Números reales (ej: 3.14, 2.0)
- *   [Act.2] Cadenas de texto (ej: "hola")
- *   [Act.3] Comentarios simples y multilínea
- *   [Act.4] Manejo de errores léxicos con línea y columna
- * ============================================================
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-/* ========================
-   TIPOS DE TOKEN
-======================== */
 typedef enum {
     KEYWORD,
     IDENTIFIER,
     NUMBER_INT,
-    NUMBER_REAL,    /* Actividad 1 */
+    NUMBER_REAL,    
     OPERATOR,
     DELIMITER,
-    STRING_TOKEN,   /* Actividad 2 */
-    COMMENT,        /* Actividad 3 */
+    STRING_TOKEN,  
+    COMMENT,      
     UNKNOWN,
-    LEX_ERROR       /* Actividad 4 */
+    LEX_ERROR     
 } TokenType;
 
-/* ========================
-   ESTRUCTURA TOKEN
-======================== */
 typedef struct {
     TokenType type;
     char      lexeme[256];
@@ -44,9 +23,6 @@ typedef struct {
     int       col;
 } Token;
 
-/* ========================
-   ESTADO DEL LEXER
-======================== */
 typedef struct {
     FILE *file;
     int   line;
@@ -54,9 +30,6 @@ typedef struct {
     int   error_count;
 } LexerState;
 
-/* ========================
-   PALABRAS CLAVE
-======================== */
 const char *KEYWORDS[] = {
     "int", "float", "char", "double", "void",
     "if", "else", "while", "for", "do",
@@ -64,9 +37,6 @@ const char *KEYWORDS[] = {
 };
 const int NUM_KEYWORDS = 14;
 
-/* ========================
-   FUNCIONES AUXILIARES
-======================== */
 int isLetter(char c) {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
@@ -99,9 +69,6 @@ const char *tokenTypeName(TokenType t) {
     }
 }
 
-/* ========================
-   AVANZAR CARÁCTER
-======================== */
 char nextChar(LexerState *ls) {
     char c = (char)fgetc(ls->file);
     if (c == '\n') {
@@ -122,9 +89,9 @@ void pushBack(LexerState *ls, char c) {
     }
 }
 
-/* ========================
+/*
    IMPRESIÓN DE TOKEN
-======================== */
+ */
 void printToken(Token *t) {
     if (t->type == LEX_ERROR) {
         printf("  [%-12s] lexema: %-20s  linea: %d  col: %d  <-- ERROR LEXICO\n",
@@ -150,9 +117,9 @@ void lexer(LexerState *ls) {
         /* --- Ignorar espacios en blanco --- */
         if (isspace(c)) continue;
 
-        /* ================================
+        /*
            ACTIVIDAD 3: Comentarios // y /* * /
-        ================================ */
+       */
         if (c == '/') {
             char next = nextChar(ls);
 
@@ -211,9 +178,9 @@ void lexer(LexerState *ls) {
             continue;
         }
 
-        /* ================================
+        /* 
            IDENTIFICADORES Y PALABRAS CLAVE
-        ================================ */
+        */
         if (isLetter(c) || c == '_') {
             int i = 0;
             tok.line = ls->line;
@@ -230,9 +197,9 @@ void lexer(LexerState *ls) {
             continue;
         }
 
-        /* ================================
+        /*
            NÚMEROS ENTEROS Y REALES (Actividad 1)
-        ================================ */
+       */
         if (isDigit(c)) {
             int i = 0;
             int is_real = 0;
@@ -269,9 +236,9 @@ void lexer(LexerState *ls) {
             continue;
         }
 
-        /* ================================
+        /* 
            ACTIVIDAD 2: Cadenas de texto "..."
-        ================================ */
+         */
         if (c == '"') {
             int i = 0;
             tok.line = ls->line;
@@ -295,9 +262,9 @@ void lexer(LexerState *ls) {
             continue;
         }
 
-        /* ================================
+        /* 
            OPERADORES (incluyendo dobles: ==, !=, <=, >=)
-        ================================ */
+        */
         if (c == '=' || c == '!' || c == '<' || c == '>') {
             tok.line    = ls->line;
             tok.col     = ls->col;
@@ -325,9 +292,9 @@ void lexer(LexerState *ls) {
             continue;
         }
 
-        /* ================================
+        /*
            DELIMITADORES
-        ================================ */
+      */
         if (c == ';' || c == ',' || c == '(' || c == ')' ||
             c == '{' || c == '}' || c == '[' || c == ']') {
             tok.type      = DELIMITER;
@@ -339,9 +306,9 @@ void lexer(LexerState *ls) {
             continue;
         }
 
-        /* ================================
+        /*
            ACTIVIDAD 4: Error léxico
-        ================================ */
+        */
         tok.type      = LEX_ERROR;
         tok.lexeme[0] = c;
         tok.lexeme[1] = '\0';
@@ -352,15 +319,11 @@ void lexer(LexerState *ls) {
     }
 }
 
-/* ========================
-   FUNCIÓN PRINCIPAL
-======================== */
 int main(int argc, char *argv[]) {
     const char *filename = (argc > 1) ? argv[1] : "input.c";
 
     printf("============================================================\n");
-    printf("  ANALIZADOR LEXICO - GUIA PRACTICA 1\n");
-    printf("  UNJBG - Ingenieria en Informatica y Sistemas\n");
+    printf("  Analisis Lexico: \n");
     printf("  Archivo: %s\n", filename);
     printf("============================================================\n\n");
 
@@ -386,7 +349,7 @@ int main(int argc, char *argv[]) {
     if (ls.error_count == 0)
         printf("  Estado: OK - Analisis completado sin errores.\n");
     else
-        printf("  Estado: ADVERTENCIA - Revisar errores antes de continuar.\n");
+        printf(" ( Estado: ADVERTENCIA - Revisar errores antes de continuar.\n");
     printf("============================================================\n");
 
     fclose(file);
