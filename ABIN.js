@@ -203,11 +203,12 @@ async function multiplicacionBooth() {
       console.log(`  ✘  Valor fuera de rango [${qMin}, ${qMax}].\n`); continue;
     }
 
-    const mArr = calcularComplementoADos(M_dec, mBits).split("").map(Number);
+    const aBits = mBits + 1; // bit extra para absorber carry en sumas intermedias
+    const mArr = calcularComplementoADos(M_dec, aBits).split("").map(Number);
     const mNeg = complemento2Array(mArr);
     const qArr = calcularComplementoADos(Q_dec, nBits).split("").map(Number);
 
-    let A = new Array(mBits).fill(0);
+    let A = new Array(aBits).fill(0);
     let Q = [...qArr];
     let Q1 = 0;
 
@@ -215,18 +216,18 @@ async function multiplicacionBooth() {
     console.log("  TABLA DE BOOTH");
     separador("-", 65);
 
-    const hA = "A".padEnd(mBits * 2);
+    const hA = "A".padEnd(aBits * 2);
     const hQ = "Q".padEnd(nBits * 2);
     console.log(`  ${"Paso".padEnd(6)} | ${"Operación".padEnd(20)} | ${hA} | ${hQ} | Q-1`);
     separador("-", 65);
 
     console.log(
-      `  ${"0".padEnd(6)} | ${"Inicio".padEnd(20)} | ${formatBits(A).padEnd(mBits * 2)} | ${formatBits(Q).padEnd(nBits * 2)} | ${Q1}`
+      `  ${"0".padEnd(6)} | ${"Inicio".padEnd(20)} | ${formatBits(A).padEnd(aBits * 2)} | ${formatBits(Q).padEnd(nBits * 2)} | ${Q1}`
     );
 
     const mostrarFila = (paso, op, a, q, q1) =>
       console.log(
-        `  ${String(paso).padEnd(6)} | ${op.padEnd(20)} | ${formatBits(a).padEnd(mBits * 2)} | ${formatBits(q).padEnd(nBits * 2)} | ${q1}`
+        `  ${String(paso).padEnd(6)} | ${op.padEnd(20)} | ${formatBits(a).padEnd(aBits * 2)} | ${formatBits(q).padEnd(nBits * 2)} | ${q1}`
       );
 
     for (let i = 1; i <= nBits; i++) {
@@ -251,7 +252,8 @@ async function multiplicacionBooth() {
 
     separador("-", 65);
 
-    const resultadoBits = [...A, ...Q];
+    // Se descarta el bit extra de A antes de concatenar
+    const resultadoBits = [...A.slice(1), ...Q];
     const totalBits = mBits + nBits;
     const resultado_dec = bitsADecimalC2(resultadoBits);
     const esperado = M_dec * Q_dec;
@@ -259,7 +261,8 @@ async function multiplicacionBooth() {
     separador();
     console.log("  RESULTADO FINAL");
     separador();
-    console.log(`  M (multiplicando)  : ${M_dec}  →  ${formatBits(mArr)}  (${mBits} bits)`);
+    const mMostrar = calcularComplementoADos(M_dec, mBits).match(/.{1,4}/g).join(" ");
+    console.log(`  M (multiplicando)  : ${M_dec}  →  ${mMostrar}  (${mBits} bits)`);
     console.log(`  Q (multiplicador)  : ${Q_dec}  →  ${formatBits(qArr)}  (${nBits} bits)`);
     console.log(`  A || Q (${totalBits} bits)   : ${formatBits(resultadoBits)}`);
     console.log(`  Resultado decimal  : ${resultado_dec}`);
@@ -306,35 +309,37 @@ async function multiplicacionSinSigno() {
       console.log(`  ✘  Valor fuera de rango [0, ${qMax}].\n`); continue;
     }
 
+    const aBits = mBits + 1;
     const mArr = M_dec.toString(2).padStart(mBits, "0").split("").map(Number);
+    const mArrExt = [0, ...mArr]; // M extendido a aBits para sumar contra A
     const qArr = Q_dec.toString(2).padStart(nBits, "0").split("").map(Number);
 
-    let A = new Array(mBits).fill(0);
+    let A = new Array(aBits).fill(0);
     let Q = [...qArr];
 
     separador();
     console.log("  TABLA SHIFT-AND-ADD");
     separador("-", 65);
 
-    const hA = "A".padEnd(mBits * 2);
+    const hA = "A".padEnd(aBits * 2);
     const hQ = "Q".padEnd(nBits * 2);
     console.log(`  ${"Paso".padEnd(6)} | ${"Operación".padEnd(20)} | ${hA} | ${hQ}`);
     separador("-", 65);
 
     console.log(
-      `  ${"0".padEnd(6)} | ${"Inicio".padEnd(20)} | ${formatBits(A).padEnd(mBits * 2)} | ${formatBits(Q).padEnd(nBits * 2)}`
+      `  ${"0".padEnd(6)} | ${"Inicio".padEnd(20)} | ${formatBits(A).padEnd(aBits * 2)} | ${formatBits(Q).padEnd(nBits * 2)}`
     );
 
     const mostrarFila = (paso, op, a, q) =>
       console.log(
-        `  ${String(paso).padEnd(6)} | ${op.padEnd(20)} | ${formatBits(a).padEnd(mBits * 2)} | ${formatBits(q).padEnd(nBits * 2)}`
+        `  ${String(paso).padEnd(6)} | ${op.padEnd(20)} | ${formatBits(a).padEnd(aBits * 2)} | ${formatBits(q).padEnd(nBits * 2)}`
       );
 
     for (let i = 1; i <= nBits; i++) {
       const q0 = Q[Q.length - 1];
 
       if (q0 === 1) {
-        A = sumarBinario(A, mArr);
+        A = sumarBinario(A, mArrExt);
         mostrarFila(i, `A = A + M (${formatBits(mArr)})`, A, Q);
       } else {
         mostrarFila(i, "Sin operación", A, Q);
@@ -348,7 +353,8 @@ async function multiplicacionSinSigno() {
 
     separador("-", 65);
 
-    const resultadoBits = [...A, ...Q];
+    // Se descarta el bit extra de A antes de concatenar
+    const resultadoBits = [...A.slice(1), ...Q];
     const totalBits = mBits + nBits;
     const resultado_dec = bitsADecimalSinSigno(resultadoBits);
     const esperado = M_dec * Q_dec;
